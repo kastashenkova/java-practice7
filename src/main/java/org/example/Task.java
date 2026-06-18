@@ -1,7 +1,6 @@
 package org.example;
 
 import java.time.LocalDate;
-import java.util.Objects;
 
 public class Task {
     private Long id;
@@ -11,16 +10,6 @@ public class Task {
     private String calendarEventId;
 
     public Task() {
-    }
-
-    public Task(Long id,
-                String name,
-                String description,
-                LocalDate dueDate) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.dueDate = dueDate;
     }
 
     public Task(Long id,
@@ -73,32 +62,6 @@ public class Task {
 
     public void setCalendarEventId(String calendarEventId) {
         this.calendarEventId = calendarEventId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Task task = (Task) o;
-        return Objects.equals(id, task.id)
-                && Objects.equals(name, task.name)
-                && Objects.equals(description, task.description)
-                && Objects.equals(dueDate, task.dueDate)
-                && Objects.equals(calendarEventId, task.calendarEventId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name, description, dueDate, calendarEventId);
-    }
-
-    @Override
-    public String toString() {
-        return "Task{" +
-                "id=" + id
-                + ", name='" + name + '\''
-                + ", description='" + description + '\''
-                + ", dueDate=" + dueDate +
-                ", calendarEventId='" + calendarEventId + '\'' + '}';
     }
 }
 

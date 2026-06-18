@@ -14,7 +14,7 @@ import java.util.Collections;
 public class GoogleCalendarClientFactory {
     private static final String APP_NAME = "Practice 7";
 
-    public Calendar getClient() throws IOException {
+    public Calendar getClient() throws IOException, GeneralSecurityException {
         String credentialsPath = System.getenv("GOOGLE_CREDENTIALS_PATH");
 
         if (credentialsPath == null || credentialsPath.isEmpty()) {
@@ -24,14 +24,10 @@ public class GoogleCalendarClientFactory {
         GoogleCredentials credentials = GoogleCredentials.fromStream(new FileInputStream(credentialsPath))
                 .createScoped(Collections.singleton("https://www.googleapis.com/auth/calendar"));
 
-        try {
-            return new Calendar.Builder(
-                    GoogleNetHttpTransport.newTrustedTransport(),
-                    GsonFactory.getDefaultInstance(),
-                    new HttpCredentialsAdapter(credentials)
-            ).setApplicationName(APP_NAME).build();
-        } catch (GeneralSecurityException | IOException e) {
-            throw new GoogleCalendarException("Could not initialize Google Calendar Client: " + e.getMessage());
-        }
+        return new Calendar.Builder(
+                GoogleNetHttpTransport.newTrustedTransport(),
+                GsonFactory.getDefaultInstance(),
+                new HttpCredentialsAdapter(credentials)
+        ).setApplicationName(APP_NAME).build();
     }
 }

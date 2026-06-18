@@ -108,8 +108,7 @@
                     <dependency>
                         <groupId>org.pitest</groupId>
                         <artifactId>pitest-junit5-plugin</artifactId>
-                        <version>1.2.1</version>
-                    </dependency>
+                        <version>1.2.3</version> </dependency>
                 </dependencies>
 
                 <configuration>
@@ -119,6 +118,11 @@
                     <targetTests>
                         <param>org.example.*Test</param>
                     </targetTests>
+
+                    <jvmArgs>
+                        <value>-XX:+EnableDynamicAgentLoading</value>
+                        <value>-Dnet.bytebuddy.experimental=true</value>
+                    </jvmArgs>
                     <outputFormats>
                         <outputFormat>XML</outputFormat>
                     </outputFormats>

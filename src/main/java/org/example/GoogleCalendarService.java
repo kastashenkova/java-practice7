@@ -7,6 +7,7 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.Events;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
@@ -29,13 +30,8 @@ public class GoogleCalendarService {
         }
     }
 
-    public CalendarEventResult createEvent(Task task) {
-        Calendar client = null;
-        try {
-            client = calendarClientFactory.getClient();
-        } catch (IOException e) {
-            throw new GoogleCalendarException("Could not get client from Google Calendar Client: " + e.getMessage());
-        }
+    public CalendarEventResult createEvent(Task task) throws GeneralSecurityException, IOException {
+        Calendar client = calendarClientFactory.getClient();
 
         ZonedDateTime start = ZonedDateTime.now(KYIV_ZONE);
         ZonedDateTime end = task.getDueDate()
@@ -56,21 +52,16 @@ public class GoogleCalendarService {
                 .setGuestsCanModify(false)
                 .setGuestsCanInviteOthers(false);
 
-        Event created = null;
-        try {
-            created = client.events()
-                    .insert(targetCalendarId, event)
-                    .setSendUpdates("all")
-                    .execute();
-        } catch (IOException e) {
-            throw new GoogleCalendarException("Could not create event: " + e.getMessage());
-        }
+        Event created = client.events()
+                .insert(targetCalendarId, event)
+                .setSendUpdates("all")
+                .execute();
 
         task.setCalendarEventId(created.getId());
         return new CalendarEventResult(created.getId(), created.getHtmlLink());
     }
 
-    public void updateEvent(Task task) throws IOException {
+    public void updateEvent(Task task) throws IOException, GeneralSecurityException {
         if (task.getCalendarEventId() == null) {
             return;
         }
@@ -97,7 +88,7 @@ public class GoogleCalendarService {
                 .execute();
     }
 
-    public void deleteEvent(Task task) throws IOException {
+    public void deleteEvent(Task task) throws IOException, GeneralSecurityException {
         if (task.getCalendarEventId() == null) {
             return;
         }
@@ -109,7 +100,7 @@ public class GoogleCalendarService {
                 .execute();
     }
 
-    public Events getAllEvents() throws IOException {
+    public Events getAllEvents() throws IOException, GeneralSecurityException {
         Calendar client = calendarClientFactory.getClient();
 
         return client.events()

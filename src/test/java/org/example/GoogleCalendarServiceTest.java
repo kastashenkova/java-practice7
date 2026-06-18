@@ -266,4 +266,62 @@ class GoogleCalendarServiceTest {
 
         softly.assertAll();
     }
+
+    @Test
+    void updateEvent_weakTest_MutantSurvives() throws Exception {
+        Task mockTask = new Task();
+        mockTask.setCalendarEventId("test-calendar-event-id");
+        mockTask.setName("Updated Name");
+        mockTask.setDueDate(LocalDate.of(2026, Month.JUNE, 30));
+
+        Calendar.Events mockEvents = mock(Calendar.Events.class);
+        Calendar.Events.Get mockGet = mock(Calendar.Events.Get.class);
+        Calendar.Events.Update mockUpdate = mock(Calendar.Events.Update.class);
+        Event mockExistingEvent = new Event();
+
+        when(calendarClientFactory.getClient()).thenReturn(mockCalendar);
+        when(mockCalendar.events()).thenReturn(mockEvents);
+        when(mockEvents.get(TEST_CALENDAR_ID, mockTask.getCalendarEventId())).thenReturn(mockGet);
+        when(mockGet.execute()).thenReturn(mockExistingEvent);
+
+        when(mockEvents.update(eq(TEST_CALENDAR_ID), eq(mockTask.getCalendarEventId()), any(Event.class)))
+                .thenReturn(mockUpdate);
+        when(mockUpdate.setSendUpdates("all")).thenReturn(mockUpdate);
+
+        googleCalendarService.updateEvent(mockTask);
+
+        verify(mockUpdate, times(1)).execute();
+    }
+
+    @Test
+    void updateEvent_strongTest_MutantKilled() throws Exception {
+        Task mockTask = new Task();
+        mockTask.setCalendarEventId("test-calendar-event-id");
+        mockTask.setName("Updated Name");
+        mockTask.setDueDate(LocalDate.of(2026, Month.JUNE, 30));
+
+        Calendar.Events mockEvents = mock(Calendar.Events.class);
+        Calendar.Events.Get mockGet = mock(Calendar.Events.Get.class);
+        Calendar.Events.Update mockUpdate = mock(Calendar.Events.Update.class);
+
+        Event mockExistingEvent = new Event();
+
+        when(calendarClientFactory.getClient()).thenReturn(mockCalendar);
+        when(mockCalendar.events()).thenReturn(mockEvents);
+        when(mockEvents.get(TEST_CALENDAR_ID, mockTask.getCalendarEventId())).thenReturn(mockGet);
+        when(mockGet.execute()).thenReturn(mockExistingEvent);
+
+        when(mockEvents.update(eq(TEST_CALENDAR_ID), eq(mockTask.getCalendarEventId()), any(Event.class)))
+                .thenReturn(mockUpdate);
+        when(mockUpdate.setSendUpdates("all")).thenReturn(mockUpdate);
+
+        googleCalendarService.updateEvent(mockTask);
+
+        verify(mockUpdate, times(1)).execute();
+
+        SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(mockExistingEvent.getSummary())
+                .isEqualTo("🎯 Updated Name");
+        softly.assertAll();
+    }
 }
