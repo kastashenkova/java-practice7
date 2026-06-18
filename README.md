@@ -11,6 +11,12 @@
 Тема проєкту: створення завдання в гугл-календарі.
 
 ## Покриття тестами
+### Запуск
+- `mvn clean test`
+- `mvn jacoco:report`
+- `mvn org.pitest:pitest-maven:mutationCoverage`
+- `mvn clean verify sonar:sonar "-Dsonar.projectKey=[your_project]" "-Dsonar.host.url=http://localhost:9000" "-Dsonar.token=[your_token]"`
+
 **JaCoCo report**
 
 **Sonar report**
