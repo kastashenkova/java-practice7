@@ -17,17 +17,15 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class GoogleCalendarServiceTest {
-
-    private GoogleCalendarService googleCalendarService;
 
     @Mock
     private GoogleCalendarClientFactory calendarClientFactory;
@@ -35,12 +33,10 @@ class GoogleCalendarServiceTest {
     @Mock
     private Calendar mockCalendar;
 
-    private static final String TEST_CALENDAR_ID = "test-calendar@group.calendar.google.com";
+    @InjectMocks
+    private GoogleCalendarService googleCalendarService;
 
-    @BeforeEach
-    void setUp() {
-        googleCalendarService = new GoogleCalendarService(calendarClientFactory, TEST_CALENDAR_ID);
-    }
+    private static final String TEST_CALENDAR_ID = "test-calendar@group.calendar.google.com";
 
     @Test
     void createEvent_validRequest_ReturnsEventLink() throws Exception {
@@ -268,60 +264,50 @@ class GoogleCalendarServiceTest {
     }
 
     @Test
-    void updateEvent_weakTest_MutantSurvives() throws Exception {
+    void createEvent_dueDateInPast_weakTest() throws Exception {
         Task mockTask = new Task();
-        mockTask.setCalendarEventId("test-calendar-event-id");
-        mockTask.setName("Updated Name");
-        mockTask.setDueDate(LocalDate.of(2026, Month.JUNE, 30));
+        mockTask.setName("Past Task");
+        mockTask.setDueDate(LocalDate.of(2020, Month.JUNE, 30));
 
         Calendar.Events mockEvents = mock(Calendar.Events.class);
-        Calendar.Events.Get mockGet = mock(Calendar.Events.Get.class);
-        Calendar.Events.Update mockUpdate = mock(Calendar.Events.Update.class);
-        Event mockExistingEvent = new Event();
+        Calendar.Events.Insert mockInsert = mock(Calendar.Events.Insert.class);
 
         when(calendarClientFactory.getClient()).thenReturn(mockCalendar);
         when(mockCalendar.events()).thenReturn(mockEvents);
-        when(mockEvents.get(TEST_CALENDAR_ID, mockTask.getCalendarEventId())).thenReturn(mockGet);
-        when(mockGet.execute()).thenReturn(mockExistingEvent);
+        when(mockEvents.insert(any(), any(Event.class))).thenReturn(mockInsert);
+        when(mockInsert.setSendUpdates("all")).thenReturn(mockInsert);
+        when(mockInsert.execute()).thenReturn(new Event());
 
-        when(mockEvents.update(eq(TEST_CALENDAR_ID), eq(mockTask.getCalendarEventId()), any(Event.class)))
-                .thenReturn(mockUpdate);
-        when(mockUpdate.setSendUpdates("all")).thenReturn(mockUpdate);
+        googleCalendarService.createEvent(mockTask);
 
-        googleCalendarService.updateEvent(mockTask);
-
-        verify(mockUpdate, times(1)).execute();
+        verify(mockInsert, times(1)).execute();
     }
 
     @Test
-    void updateEvent_strongTest_MutantKilled() throws Exception {
+    void createEvent_dueDateInPast_strongTest() throws Exception {
         Task mockTask = new Task();
-        mockTask.setCalendarEventId("test-calendar-event-id");
-        mockTask.setName("Updated Name");
-        mockTask.setDueDate(LocalDate.of(2026, Month.JUNE, 30));
+        mockTask.setName("Past Task");
+        mockTask.setDueDate(LocalDate.of(2020, Month.JUNE, 30));
 
         Calendar.Events mockEvents = mock(Calendar.Events.class);
-        Calendar.Events.Get mockGet = mock(Calendar.Events.Get.class);
-        Calendar.Events.Update mockUpdate = mock(Calendar.Events.Update.class);
-
-        Event mockExistingEvent = new Event();
+        Calendar.Events.Insert mockInsert = mock(Calendar.Events.Insert.class);
 
         when(calendarClientFactory.getClient()).thenReturn(mockCalendar);
         when(mockCalendar.events()).thenReturn(mockEvents);
-        when(mockEvents.get(TEST_CALENDAR_ID, mockTask.getCalendarEventId())).thenReturn(mockGet);
-        when(mockGet.execute()).thenReturn(mockExistingEvent);
+        when(mockEvents.insert(any(), any(Event.class))).thenReturn(mockInsert);
+        when(mockInsert.setSendUpdates("all")).thenReturn(mockInsert);
+        when(mockInsert.execute()).thenReturn(new Event());
 
-        when(mockEvents.update(eq(TEST_CALENDAR_ID), eq(mockTask.getCalendarEventId()), any(Event.class)))
-                .thenReturn(mockUpdate);
-        when(mockUpdate.setSendUpdates("all")).thenReturn(mockUpdate);
+        googleCalendarService.createEvent(mockTask);
 
-        googleCalendarService.updateEvent(mockTask);
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(mockEvents).insert(any(), eventCaptor.capture());
+        Event sentEvent = eventCaptor.getValue();
 
-        verify(mockUpdate, times(1)).execute();
+        com.google.api.client.util.DateTime expectedMinEnd = new com.google.api.client.util.DateTime(System.currentTimeMillis());
 
-        SoftAssertions softly = new SoftAssertions();
-        softly.assertThat(mockExistingEvent.getSummary())
-                .isEqualTo("🎯 Updated Name");
-        softly.assertAll();
+        assertThat(sentEvent.getEnd().getDateTime().getValue())
+                .as("Мутант убитий: Перевіряємо, що дата завершення автоматично перенеслася на тиждень вперед")
+                .isGreaterThan(expectedMinEnd.getValue());
     }
 }

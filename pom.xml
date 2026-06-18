@@ -64,12 +64,14 @@
 
     <build>
         <plugins>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
+                    <environmentVariables>
+                        <CALENDAR_ID>test-calendar@group.calendar.google.com</CALENDAR_ID>
+                    </environmentVariables>
                     <argLine>
                         @{argLine}
                         -Dnet.bytebuddy.experimental=true

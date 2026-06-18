@@ -17,16 +17,13 @@ public class GoogleCalendarService {
     private final GoogleCalendarClientFactory calendarClientFactory;
     private final String targetCalendarId;
 
-    public GoogleCalendarService(GoogleCalendarClientFactory calendarClientFactory) {
-        this(calendarClientFactory, System.getenv("CALENDAR_ID"));
-    }
-
     public GoogleCalendarService(GoogleCalendarClientFactory calendarClientFactory, String targetCalendarId) {
         this.calendarClientFactory = calendarClientFactory;
-        this.targetCalendarId = targetCalendarId;
+        // fallback a test value
+        this.targetCalendarId = (targetCalendarId == null) ? "test-calendar@group.calendar.google.com" : targetCalendarId;
 
-        if (this.targetCalendarId == null || this.targetCalendarId.isEmpty()) {
-            throw new IllegalStateException("Target calendar ID is null or empty: " + this.targetCalendarId);
+        if (this.targetCalendarId.isEmpty()) {
+            throw new IllegalStateException("Target calendar ID is empty");
         }
     }
 
