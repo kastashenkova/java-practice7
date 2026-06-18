@@ -1,5 +1,6 @@
 package org.example;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.eq;
@@ -11,11 +12,14 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.Events;
 import java.time.LocalDate;
+import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -137,7 +141,90 @@ public class GoogleCalendarServiceTest {
     }
 
     @Test
-    void testTaskInitialization_WithSoftAssertions() throws Exception {
+    void getEvents_existingEvents_ReturnAllEventsFromTheCalendar() throws Exception {
+        Event event1 = new Event().setId("test-1");
+        Event event2 = new Event().setId("test-2");
+        Event event3 = new Event().setId("test-3");
+
+        List<Event> items = List.of(event1, event2, event3);
+
+        Events events = new Events();
+        events.setItems(items);
+
+        Calendar.Events calendarEvents = mock(Calendar.Events.class);
+        Calendar.Events.List listRequest = mock(Calendar.Events.List.class);
+
+        when(calendarClientFactory.getClient()).thenReturn(mockCalendar);
+        when(mockCalendar.events()).thenReturn(calendarEvents);
+        when(calendarEvents.list(TEST_CALENDAR_ID)).thenReturn(listRequest);
+        when(listRequest.execute()).thenReturn(events);
+
+        Events result = googleCalendarService.getAllEvents();
+
+        assertThat(result.getItems())
+                .extracting(Event::getId)
+                .containsExactlyInAnyOrder("test-1", "test-2", "test-3");
+    }
+
+    @Test
+    void getEvents_noEvents_ReturnEmptyList() throws Exception {
+        Events events = new Events();
+        events.setItems(List.of());
+
+        Calendar.Events calendarEvents = mock(Calendar.Events.class);
+        Calendar.Events.List listRequest = mock(Calendar.Events.List.class);
+
+        when(calendarClientFactory.getClient()).thenReturn(mockCalendar);
+        when(mockCalendar.events()).thenReturn(calendarEvents);
+        when(calendarEvents.list(TEST_CALENDAR_ID)).thenReturn(listRequest);
+        when(listRequest.execute()).thenReturn(events);
+
+        Events result = googleCalendarService.getAllEvents();
+
+        assertThat(result.getItems())
+                .isEmpty();
+    }
+
+    @Test
+    void createEvent_allCreatedEventsShouldHaveValidGoogleCalendarStructure() throws Exception {
+        Task task1 = new Task();
+        task1.setName("Test Task");
+        task1.setDescription("Test Description");
+        task1.setDueDate(LocalDate.now());
+
+        Event createdEvent = new Event()
+                .setId("google-1")
+                .setHtmlLink("https://calendar.google.com/event/1");
+
+        Calendar.Events.Insert insertRequest = mock(Calendar.Events.Insert.class);
+        Calendar.Events calendarEvents = mock(Calendar.Events.class);
+
+        when(calendarClientFactory.getClient()).thenReturn(mockCalendar);
+        when(mockCalendar.events()).thenReturn(calendarEvents);
+        when(calendarEvents.insert(eq(TEST_CALENDAR_ID), any(Event.class)))
+                .thenReturn(insertRequest);
+
+        when(insertRequest.setSendUpdates("all")).thenReturn(insertRequest);
+        when(insertRequest.execute()).thenReturn(createdEvent);
+
+        googleCalendarService.createEvent(task1);
+        ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+        verify(calendarEvents).insert(eq(TEST_CALENDAR_ID), eventCaptor.capture());
+
+        Event sentEvent = eventCaptor.getValue();
+
+        assertThat(List.of(sentEvent))
+                .allMatch(e ->
+                        e.getSummary().startsWith("🎯") &&
+                                "confirmed".equals(e.getStatus()) &&
+                                e.getStart() != null &&
+                                e.getEnd() != null &&
+                                "Europe/Kyiv".equals(e.getStart().getTimeZone())
+                );
+    }
+
+    @Test
+    void createTask_validRequest_PastValidCalendarEventIdIntoTask() throws Exception {
         // arrange
         Long expectedId = 1L;
         String expectedName = "Practice 7";

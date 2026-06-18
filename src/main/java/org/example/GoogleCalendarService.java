@@ -4,6 +4,8 @@ import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
+import com.google.api.services.calendar.model.Events;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
@@ -93,6 +95,14 @@ public class GoogleCalendarService {
                 .events()
                 .delete(targetCalendarId, task.getCalendarEventId())
                 .setSendUpdates("all")
+                .execute();
+    }
+
+    public Events getAllEvents() throws Exception {
+        Calendar client = calendarClientFactory.getClient();
+
+        return client.events()
+                .list(targetCalendarId)
                 .execute();
     }
 
