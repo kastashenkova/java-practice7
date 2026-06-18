@@ -14,6 +14,7 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.Events;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class GoogleCalendarServiceTest {
+class GoogleCalendarServiceTest {
 
     private GoogleCalendarService googleCalendarService;
 
@@ -46,7 +47,7 @@ public class GoogleCalendarServiceTest {
         Task mockTask = new Task();
         mockTask.setId(1L);
         mockTask.setName("Test Task");
-        mockTask.setDueDate(java.time.LocalDate.now());
+        mockTask.setDueDate(LocalDate.of(2026, Month.JUNE, 30));
 
         Calendar.Events mockEvents = mock(Calendar.Events.class);
         Calendar.Events.Insert mockInsert = mock(Calendar.Events.Insert.class);
@@ -72,7 +73,7 @@ public class GoogleCalendarServiceTest {
     void updateEvent_existingEvent_Success() throws Exception {
         Task mockTask = new Task();
         mockTask.setCalendarEventId("test-calendar-event-id");
-        mockTask.setDueDate(java.time.LocalDate.now());
+        mockTask.setDueDate(LocalDate.of(2026, Month.JUNE, 30));
 
         Calendar.Events mockEvents = mock(Calendar.Events.class);
         Calendar.Events.Get mockGet = mock(Calendar.Events.Get.class);
@@ -190,7 +191,7 @@ public class GoogleCalendarServiceTest {
         Task task1 = new Task();
         task1.setName("Test Task");
         task1.setDescription("Test Description");
-        task1.setDueDate(LocalDate.now());
+        task1.setDueDate(LocalDate.of(2026, Month.JUNE, 30));
 
         Event createdEvent = new Event()
                 .setId("google-1")
@@ -229,7 +230,7 @@ public class GoogleCalendarServiceTest {
         Long expectedId = 1L;
         String expectedName = "Practice 7";
         String expectedDescription = "Complete hometask 7";
-        LocalDate expectedDate = LocalDate.of(2026, 6, 23);
+        LocalDate expectedDate = LocalDate.of(2026, Month.JUNE, 23);
         String expectedGeneratedEventId = "google-event-id-999";
 
         Task task = new Task(expectedId, expectedName, expectedDescription, expectedDate, null);
