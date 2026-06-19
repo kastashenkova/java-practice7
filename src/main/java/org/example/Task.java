@@ -24,6 +24,16 @@ public class Task {
         this.calendarEventId = calendarEventId;
     }
 
+    public Task(Long id,
+                String name,
+                String description,
+                LocalDate dueDate) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.dueDate = dueDate;
+    }
+
     public Long getId() {
         return id;
     }

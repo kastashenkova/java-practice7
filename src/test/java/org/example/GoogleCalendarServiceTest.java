@@ -307,7 +307,6 @@ class GoogleCalendarServiceTest {
         com.google.api.client.util.DateTime expectedMinEnd = new com.google.api.client.util.DateTime(System.currentTimeMillis());
 
         assertThat(sentEvent.getEnd().getDateTime().getValue())
-                .as("Мутант убитий: Перевіряємо, що дата завершення автоматично перенеслася на тиждень вперед")
                 .isGreaterThan(expectedMinEnd.getValue());
     }
 }
